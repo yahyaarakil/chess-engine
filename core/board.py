@@ -25,14 +25,17 @@ class Board:
         for piece_data in board_dictionaries[board_pattern]["pieces"]:
             print("Placing a {} {} at ({}, {})".format(piece_data[2], piece_data[1], piece_data[0][0], piece_data[0][1]))
             self.place_piece(piece_data[0], Piece(piece_data[1], piece_data[2], piece_dictionaries[piece_data[1]]["sprite"]))
-        y = self.height - 1
+        self.refresh_moves()
+    
+    def refresh_moves(self):
+        y = 0
         for row in self.tiles:
             x = 0
             for tile in row:
                 if tile.piece_slot != None:
                     self.calc_move(tile.piece_slot, (x, y))
                 x += 1
-            y -= 1
+            y += 1
     
     def place_piece(self, pos, piece):
         self.tiles[pos[1]][pos[0]].piece_slot = piece
@@ -48,6 +51,7 @@ class Board:
 
     def calc_move(self, piece, pos):
         piece.move = []
+        piece.attack = []
         move_pattern = piece_dictionaries[piece.piece_name]["move"]
         attack_pattern =  piece_dictionaries[piece.piece_name]["attack"]
         for pattern in move_pattern:
@@ -70,47 +74,51 @@ class Board:
                 self.find_dimension(piece, pos, "attack", pattern[1])
 
     def find_dimension(self, piece, pos, pattern_name, pattern):
-        pass
+        pos_y = pos[1] - len(pattern)//2
+        for row in range(len(pattern)):
+            pos_x = pos[0] - len(pattern[row])//2
+            for column in range(len(pattern[row])):
+                if pattern[row][column] == 1:
+                    if pos_x < self.width and pos_x > -1\
+                        and pos_y < self.height and pos_y > -1:
+                        #latch
+                        vector = [pos_x - pos[0], pos_y - pos[1]]
+                        selection_x = pos_x
+                        selection_y = pos_y
+                        while(True):
+                            #do
+                            if selection_x > self.width - 1 or selection_x < 0\
+                                or selection_y > self.height - 1 or selection_y < 0:
+                                break
+                            if self.tiles[selection_y][selection_x].piece_slot == None:
+                                piece.move.append(self.tiles[selection_y][selection_x])
+                            else:
+                                if self.tiles[selection_y][selection_x].piece_slot.owner == piece.owner:
+                                    break
+                                else:
+                                    piece.attack.append(self.tiles[selection_y][selection_x])
+                                    break
+                            selection_x += vector[0]
+                            selection_y += vector[1]
+                pos_x += 1
+            pos_y += 1
 
         
     def find_pattern(self, piece, pos, pattern_name, pattern):
-        x = pos[0] - len(pattern[0])//2
-        y = pos[1] + len(pattern)//2
-        yy = y
-        for row in pattern:
-            xx = x
-            if yy < 0 or yy > self.height - 1:
-                yy -= 1
-                continue
-            for cell in row:
-                if cell == 0:
-                    xx += 1
-                    continue
-                if xx < 0 or xx > self.width - 1:
-                    xx += 1
-                    continue
-                print("checking")
-                if self.tiles[yy][xx].piece_slot == None:
-                    if pattern_name == "move":
-                        if not self.tiles[yy][xx] in piece.move\
-                            and not self.tiles[yy][xx] in piece.attack:
-                            yyy = yy + 3
-                            if yyy >= self.height - 1:
-                                yyy -= 6
-                            piece.move.append(self.tiles[yyy][xx])
-                            print("appending to {}".format(piece.piece_name))
-                else:
-                    if self.tiles[yy][xx].piece_slot.owner != piece.owner\
-                        and pattern_name == "attack":
-                        if not self.tiles[yy][xx] in piece.move\
-                            and not self.tiles[yy][xx] in piece.attack:
-                            yyy = yy + 3
-                            if yyy > self.height - 1:
-                                yyy -= 6
-                            piece.attack.append(self.tiles[yy][xx])
-                            print("appending to {}".format(piece.piece_name))
-                xx += 1
-            yy -= 1
+        pos_y = pos[1] - len(pattern)//2
+        for row in range(len(pattern)):
+            pos_x = pos[0] - len(pattern[row])//2
+            for column in range(len(pattern[row])):
+                if pattern[row][column] == 1:
+                    if pos_x < self.width and pos_x > -1\
+                        and pos_y < self.height and pos_y > -1:
+                        if self.tiles[pos_y][pos_x].piece_slot == None and pattern_name == "move":
+                            piece.move.append(self.tiles[pos_y][pos_x])
+                        elif self.tiles[pos_y][pos_x].piece_slot != None and pattern_name == "attack":
+                            if self.tiles[pos_y][pos_x].piece_slot.owner != piece.owner:
+                                piece.attack.append(self.tiles[pos_y][pos_x])
+                pos_x += 1
+            pos_y += 1
 
     def kill(self, piece):
         del piece
@@ -124,5 +132,5 @@ class Board:
             self.kill(to_tile.piece_slot)
         to_tile.piece_slot = from_tile.piece_slot
         from_tile.piece_slot = None
-        self.calc_move(to_tile.piece_slot, to_tile.pos)
+        self.refresh_moves()
 

@@ -56,14 +56,19 @@ class Debug:
 
     def render_board(self, board):
         print("")
+        row_no = 0
         for row in board.tiles:
-            print("\n"+"*"*(5*board.width+1)+"\n*", end = "")
+            print("\n "+"*"*(5*board.width+1)+"\n"+str(row_no)+"*", end = "")
+            row_no += 1
             for tile in row:
                 self.render_tile_mode_start(tile)
                 print(self.piece_to_token(tile.piece_slot), end = "")
                 self.render_tile_mode_end(tile)
                 print("*", end = "")
-        print("\n"+"*"*(5*board.width+1) + "\n\n")
+        print("\n "+"*"*(5*board.width+1))
+        for i in range(board.width):
+            print("    {}".format(i), end = "")
+        print("\n\n")
 
     def deselect(self, my_board):
         if self.selected == None:

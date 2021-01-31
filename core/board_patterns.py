@@ -49,4 +49,13 @@ board_dictionaries = {
             ((4, 7), "king", "white"),
         ]
     },
+    "testing":{
+        "players": ("white", "black"),
+        "dimensions": (8, 8),
+        "tile_zero": -1,
+        "pieces":[
+            ((6, 7), "knight", "white"),
+            ((2, 7), "bishop", "white"),
+        ]
+    },
 }
