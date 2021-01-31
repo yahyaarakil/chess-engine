@@ -7,10 +7,9 @@ class Tile:
         self.piece_slot = None
         self.color = color
         self.pos = pos
-        self.selected = False
 
 class Board:
-    def __init__(self, board_pattern):
+    def __init__(self, board_pattern, tile_class = Tile):
         self.tiles = []
         self.board_pattern = board_pattern
         self.players = (board_dictionaries[board_pattern]["players"])[::]
@@ -20,7 +19,7 @@ class Board:
         for y in range(8):
             self.tiles.append([])
             for x in range(8):
-                self.tiles[y].append(Tile(color, (x, y)))
+                self.tiles[y].append(tile_class(color, (x, y)))
                 color *= -1
             color *= -1
         for piece_data in board_dictionaries[board_pattern]["pieces"]:
@@ -49,13 +48,25 @@ class Board:
 
     def calc_move(self, piece, pos):
         piece.move = []
-        move_pattern = piece_dictionaries[piece.piece_name]["move"] + piece_dictionaries[piece.piece_name]["attack"]
+        move_pattern = piece_dictionaries[piece.piece_name]["move"]
+        attack_pattern =  piece_dictionaries[piece.piece_name]["attack"]
         for pattern in move_pattern:
             if pattern[0] == "pattern":
-                self.find_pattern(piece, pos, "move", pattern[1])
-                self.find_pattern(piece, pos, "attack", pattern[1])
+                pat = pattern[1][:]
+                if piece_dictionaries[piece.piece_name]["reverse_move"]\
+                    and piece.owner == "black":
+                    pat.reverse()
+                self.find_pattern(piece, pos, "move", pat)
             elif pattern[0] == "dimension":
                 self.find_dimension(piece, pos, "move", pattern[1])
+        for pattern in attack_pattern:
+            if pattern[0] == "pattern":
+                pat = pattern[1][:]
+                if piece_dictionaries[piece.piece_name]["reverse_move"]\
+                    and piece.owner == "black":
+                    pat.reverse()
+                self.find_pattern(piece, pos, "attack", pat)
+            elif pattern[0] == "dimension":
                 self.find_dimension(piece, pos, "attack", pattern[1])
 
     def find_dimension(self, piece, pos, pattern_name, pattern):
@@ -81,13 +92,37 @@ class Board:
                 print("checking")
                 if self.tiles[yy][xx].piece_slot == None:
                     if pattern_name == "move":
-                        if not self.tiles[yy][xx] in piece.move:
-                            piece.move.append(self.tiles[yy][xx])
+                        if not self.tiles[yy][xx] in piece.move\
+                            and not self.tiles[yy][xx] in piece.attack:
+                            yyy = yy + 3
+                            if yyy >= self.height - 1:
+                                yyy -= 6
+                            piece.move.append(self.tiles[yyy][xx])
                             print("appending to {}".format(piece.piece_name))
                 else:
-                    if self.tiles[yy][xx].piece_slot.owner == piece.owner and pattern_name == "attack":
-                        if not self.tiles[yy][xx] in piece.move:
-                            piece.move.append(self.tiles[yy][xx])
+                    if self.tiles[yy][xx].piece_slot.owner != piece.owner\
+                        and pattern_name == "attack":
+                        if not self.tiles[yy][xx] in piece.move\
+                            and not self.tiles[yy][xx] in piece.attack:
+                            yyy = yy + 3
+                            if yyy > self.height - 1:
+                                yyy -= 6
+                            piece.attack.append(self.tiles[yy][xx])
                             print("appending to {}".format(piece.piece_name))
                 xx += 1
             yy -= 1
+
+    def kill(self, piece):
+        del piece
+
+    def move(self, from_tile, to_tile):
+        print("MOVING!")
+        if from_tile.piece_slot == None:
+            print("NOPE!")
+            return
+        if to_tile.piece_slot != None:
+            self.kill(to_tile.piece_slot)
+        to_tile.piece_slot = from_tile.piece_slot
+        from_tile.piece_slot = None
+        self.calc_move(to_tile.piece_slot, to_tile.pos)
+
