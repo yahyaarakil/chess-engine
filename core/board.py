@@ -7,6 +7,7 @@ class Tile:
         self.piece_slot = None
         self.color = color
         self.pos = pos
+        self.selected = False
 
 class Board:
     def __init__(self, board_pattern):
@@ -54,19 +55,11 @@ class Board:
                 self.find_pattern(piece, pos, "move", pattern[1])
                 self.find_pattern(piece, pos, "attack", pattern[1])
             elif pattern[0] == "dimension":
-                pass
-                #self.find_dimension(piece, pos, "move", pattern[1])
-                #self.find_dimension(piece, pos, "attack", pattern[1])
+                self.find_dimension(piece, pos, "move", pattern[1])
+                self.find_dimension(piece, pos, "attack", pattern[1])
 
     def find_dimension(self, piece, pos, pattern_name, pattern):
-        y = 2
-        for row in pattern:
-            x = 0
-            for cell in row:
-                if cell == 1:
-                    pass
-                x += 1
-            y -= 1
+        pass
 
         
     def find_pattern(self, piece, pos, pattern_name, pattern):
