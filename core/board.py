@@ -55,6 +55,9 @@ class Board:
         move_pattern = piece_dictionaries[piece.piece_name]["move"]
         attack_pattern =  piece_dictionaries[piece.piece_name]["attack"]
         for pattern in move_pattern:
+            if len(pattern) == 3:
+                if not conds[pattern[2]](piece):
+                    continue
             if pattern[0] == "pattern":
                 pat = pattern[1][:]
                 if piece_dictionaries[piece.piece_name]["reverse_move"]\
@@ -64,6 +67,9 @@ class Board:
             elif pattern[0] == "dimension":
                 self.find_dimension(piece, pos, "move", pattern[1])
         for pattern in attack_pattern:
+            if len(pattern) == 3:
+                if not conds[pattern[2]](piece):
+                    continue
             if pattern[0] == "pattern":
                 pat = pattern[1][:]
                 if piece_dictionaries[piece.piece_name]["reverse_move"]\
@@ -105,32 +111,48 @@ class Board:
 
         
     def find_pattern(self, piece, pos, pattern_name, pattern):
+        possilbe_count = 0
+        possible = []
         pos_y = pos[1] - len(pattern)//2
         for row in range(len(pattern)):
             pos_x = pos[0] - len(pattern[row])//2
             for column in range(len(pattern[row])):
-                if pattern[row][column] == 1:
+                if pattern[row][column] == 1 or pattern[row][column] == 5:
                     if pos_x < self.width and pos_x > -1\
                         and pos_y < self.height and pos_y > -1:
+                        possilbe_count += 1
                         if self.tiles[pos_y][pos_x].piece_slot == None and pattern_name == "move":
-                            piece.move.append(self.tiles[pos_y][pos_x])
+                            if pattern[row][column] == 1:
+                                piece.move.append(self.tiles[pos_y][pos_x])
+                            else:
+                                possible.append((self.tiles[pos_y][pos_x], "move"))
                         elif self.tiles[pos_y][pos_x].piece_slot != None and pattern_name == "attack":
                             if self.tiles[pos_y][pos_x].piece_slot.owner != piece.owner:
-                                piece.attack.append(self.tiles[pos_y][pos_x])
+                                if pattern[row][column] == 1:
+                                    piece.attack.append(self.tiles[pos_y][pos_x])
+                                else:
+                                    possible.append((self.tiles[pos_y][pos_x], "attack"))
                 pos_x += 1
             pos_y += 1
+        if possilbe_count == len(possible):
+            print("HERE: ", possilbe_count, len(possible), "for", piece.piece_name)
+            for tile in possible:
+                if tile[1] == "move":
+                    piece.move.append(tile[0])
+                elif tile[1] == "attack":
+                    piece.attack.append(tile[0])
 
     def kill(self, piece):
         del piece
 
     def move(self, from_tile, to_tile):
-        print("MOVING!")
         if from_tile.piece_slot == None:
-            print("NOPE!")
             return
-        if to_tile.piece_slot != None:
-            self.kill(to_tile.piece_slot)
-        to_tile.piece_slot = from_tile.piece_slot
-        from_tile.piece_slot = None
-        self.refresh_moves()
+        if to_tile in from_tile.piece_slot.move + from_tile.piece_slot.attack:
+            if to_tile.piece_slot != None:
+                self.kill(to_tile.piece_slot)
+            to_tile.piece_slot = from_tile.piece_slot
+            from_tile.piece_slot = None
+            self.refresh_moves()
+            to_tile.piece_slot.move_no += 1
 

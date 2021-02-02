@@ -1,8 +1,33 @@
+class Piece:
+    def __init__(self, piece_name, owner, sprite_name):
+        self.piece_name = piece_name
+        self.owner = owner
+        self.move = []
+        self.attack = []
+        self.sprite_name = sprite_name
+        self.move_no = 0
+
+def pawn_cond(piece):
+    if piece.move_no == 0:
+        return True
+    return False
+
+conds = {
+    "pawn_cond": pawn_cond,
+}
+        
 patterns = {
     "pawn_move": [
         [0, 1, 0],
         [0, 0, 0],
         [0, 0, 0]
+    ],
+    "pawn_move1": [
+        [0, 0, 5, 0, 0],
+        [0, 0, 5, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0]
     ],
     "pawn_attack": [
         [1, 0, 1],
@@ -49,7 +74,7 @@ dimensions = {
 piece_dictionaries = {
     "pawn":{
         "value": 1,
-        "move": (("pattern", patterns["pawn_move"]), ),
+        "move": (("pattern", patterns["pawn_move"]), ("pattern", patterns["pawn_move1"], "pawn_cond"),),
         "attack": (("pattern", patterns["pawn_attack"]), ),
         "reverse_move": True,
         "sprite": "pawn.png"
@@ -90,11 +115,3 @@ piece_dictionaries = {
         "sprite": "king.png"
     }
 }
-
-class Piece:
-    def __init__(self, piece_name, owner, sprite_name):
-        self.piece_name = piece_name
-        self.owner = owner
-        self.move = []
-        self.attack = []
-        self.sprite_name = sprite_name
