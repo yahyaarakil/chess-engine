@@ -9,8 +9,9 @@ class Tile:
         self.pos = pos
 
 class Board:
-    def __init__(self, board_pattern, tile_class = Tile):
+    def __init__(self, board_pattern, tile_class = Tile, load = True):
         self.tiles = []
+        self.tile_class = tile_class
         self.board_pattern = board_pattern
         self.players = {}
         for player in (board_dictionaries[board_pattern]["players"]):
@@ -24,11 +25,42 @@ class Board:
                 self.tiles[y].append(tile_class(color, (x, y)))
                 color *= -1
             color *= -1
+        if load:
+            self.load_pattern(board_pattern)
+
+    def load_pattern(self, board_pattern):
         for piece_data in board_dictionaries[board_pattern]["pieces"]:
             self.place_piece(piece_data[0], Piece(piece_data[1], piece_data[2], piece_dictionaries[piece_data[1]]["sprite"]))
         self.refresh_moves()
+
+    def copy_board(self, ref_board):
+        for row in ref_board.tiles:
+            for tile in row:
+                if tile.piece_slot != None:
+                    self.place_piece(tile.pos, Piece(tile.piece_slot.piece_name, tile.piece_slot.owner, tile.piece_slot.sprite_name))
+
+    def prune_moves(self):
+        for row in self.tiles:
+            for tile in row:
+                if tile.piece_slot != None:
+                    for move in tile.piece_slot.move + tile.piece_slot.attack:
+                        temp_board = Board(self.board_pattern, self.tile_class, False)
+                        temp_board.copy_board(ref_board = self)
+                        temp_board.move_unchecked(temp_board.tiles[tile.pos[1]][tile.pos[0]], temp_board.tiles[move.pos[1]][move.pos[0]])
+                        temp_board.refresh_moves(False)
+                        for piece in temp_board.players[tile.piece_slot.owner][0]:
+                            if piece.is_attacked:
+                                if move in tile.piece_slot.move:
+                                    tile.piece_slot.move.remove(move)
+                                else:
+                                    tile.piece_slot.attack.remove(move)
+
     
-    def refresh_moves(self):
+    def refresh_moves(self, check = True):
+        for row in self.tiles:
+            for tile in row:
+                if tile.piece_slot != None:
+                    tile.piece_slot.is_attacked = False
         y = 0
         for row in self.tiles:
             x = 0
@@ -37,6 +69,8 @@ class Board:
                     self.calc_move(tile.piece_slot, (x, y))
                 x += 1
             y += 1
+        if check:
+            self.prune_moves()
     
     def place_piece(self, pos, piece):
         self.tiles[pos[1]][pos[0]].piece_slot = piece
@@ -146,10 +180,14 @@ class Board:
         if from_tile.piece_slot == None:
             return
         if to_tile in from_tile.piece_slot.move + from_tile.piece_slot.attack:
-            if to_tile.piece_slot != None:
-                self.kill(to_tile.piece_slot)
-            to_tile.piece_slot = from_tile.piece_slot
-            from_tile.piece_slot = None
-            self.refresh_moves()
-            to_tile.piece_slot.move_no += 1
+            self.move_unchecked(from_tile, to_tile)
+        self.refresh_moves()
+
+    def move_unchecked(self, from_tile, to_tile):
+        if to_tile.piece_slot != None:
+            self.kill(to_tile.piece_slot)
+        to_tile.piece_slot = from_tile.piece_slot
+        from_tile.piece_slot = None
+        to_tile.piece_slot.move_no += 1
+
 
