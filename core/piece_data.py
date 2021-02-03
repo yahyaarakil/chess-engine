@@ -6,6 +6,7 @@ class Piece:
         self.attack = []
         self.sprite_name = sprite_name
         self.move_no = 0
+        self.is_attacked = False
 
 def pawn_cond(piece):
     if piece.move_no == 0:
@@ -112,6 +113,7 @@ piece_dictionaries = {
         "move": (("pattern", patterns["king"]), ),
         "attack": (("pattern", patterns["king"]), ),
         "reverse_move": False,
-        "sprite": "king.png"
+        "sprite": "king.png",
+        "guarded": "king"
     }
 }

@@ -12,7 +12,9 @@ class Board:
     def __init__(self, board_pattern, tile_class = Tile):
         self.tiles = []
         self.board_pattern = board_pattern
-        self.players = (board_dictionaries[board_pattern]["players"])[::]
+        self.players = {}
+        for player in (board_dictionaries[board_pattern]["players"]):
+            self.players[player] = [[], []]
         self. width = board_dictionaries[board_pattern]["dimensions"][0]
         self. height = board_dictionaries[board_pattern]["dimensions"][1]
         color = board_dictionaries[self.board_pattern]["tile_zero"]
@@ -23,7 +25,6 @@ class Board:
                 color *= -1
             color *= -1
         for piece_data in board_dictionaries[board_pattern]["pieces"]:
-            print("Placing a {} {} at ({}, {})".format(piece_data[2], piece_data[1], piece_data[0][0], piece_data[0][1]))
             self.place_piece(piece_data[0], Piece(piece_data[1], piece_data[2], piece_dictionaries[piece_data[1]]["sprite"]))
         self.refresh_moves()
     
@@ -39,15 +40,10 @@ class Board:
     
     def place_piece(self, pos, piece):
         self.tiles[pos[1]][pos[0]].piece_slot = piece
-
-    def print_board(self):
-        for row in self.tiles:
-            for cell in row:
-                if cell.color == 1:
-                    print("# ", end = "")
-                else:
-                    print("O ", end = "")
-            print("")
+        if "guarded" in piece_dictionaries[piece.piece_name]:
+            self.players[piece.owner][0].append(piece)
+        else:
+            self.players[piece.owner][1].append(piece)
 
     def calc_move(self, piece, pos):
         piece.move = []
@@ -78,6 +74,8 @@ class Board:
                 self.find_pattern(piece, pos, "attack", pat)
             elif pattern[0] == "dimension":
                 self.find_dimension(piece, pos, "attack", pattern[1])
+        for tile in piece.attack:
+            tile.piece_slot.is_attacked = True
 
     def find_dimension(self, piece, pos, pattern_name, pattern):
         pos_y = pos[1] - len(pattern)//2
@@ -135,7 +133,6 @@ class Board:
                 pos_x += 1
             pos_y += 1
         if possilbe_count == len(possible):
-            print("HERE: ", possilbe_count, len(possible), "for", piece.piece_name)
             for tile in possible:
                 if tile[1] == "move":
                     piece.move.append(tile[0])
