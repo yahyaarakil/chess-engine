@@ -1,4 +1,5 @@
 class Piece:
+    identifiers = 0
     def __init__(self, piece_name, owner, sprite_name):
         self.piece_name = piece_name
         self.owner = owner
@@ -7,6 +8,8 @@ class Piece:
         self.sprite_name = sprite_name
         self.move_no = 0
         self.is_attacked = False
+        self.identifier = Piece.identifiers
+        Piece.identifiers += 1
 
 def pawn_cond(piece):
     if piece.move_no == 0:

@@ -183,6 +183,8 @@ class Board:
                     piece.attack.append(tile[0])
 
     def kill(self, piece):
+        if piece in self.players[piece.owner][1]:
+            self.players[piece.owner][1].remove(piece)
         del piece
 
     def move(self, from_tile, to_tile):
@@ -190,7 +192,9 @@ class Board:
             return
         if to_tile in from_tile.piece_slot.move + from_tile.piece_slot.attack:
             self.move_unchecked(from_tile, to_tile)
-        self.refresh_moves()
+            self.refresh_moves()
+            return True
+        return False
 
     def move_unchecked(self, from_tile, to_tile):
         if to_tile.piece_slot != None:
@@ -198,5 +202,6 @@ class Board:
         to_tile.piece_slot = from_tile.piece_slot
         from_tile.piece_slot = None
         to_tile.piece_slot.move_no += 1
+        return True
 
 

@@ -55,20 +55,21 @@ class Debug:
             print(" ", end = "")
 
     def render_board(self, board):
-        print("")
+        string = ""
+        string+='\n'
         row_no = 0
         for row in board.tiles:
-            print("\n "+"*"*(5*board.width+1)+"\n"+str(row_no)+"*", end = "")
+            string+=("\n "+"*"*(5*board.width+1)+"\n"+str(row_no)+"*")
             row_no += 1
             for tile in row:
                 self.render_tile_mode_start(tile)
-                print(self.piece_to_token(tile.piece_slot), end = "")
+                string+=(self.piece_to_token(tile.piece_slot))
                 self.render_tile_mode_end(tile)
-                print("*", end = "")
-        print("\n "+"*"*(5*board.width+1))
+                string+=("*")
+        string+=("\n "+"*"*(5*board.width+1)+"\n")
         for i in range(board.width):
-            print("    {}".format(i), end = "")
-        print("\n\n")
+            string+=("    {}".format(i))
+        string+=("\n\n\n")
 
     def deselect(self, my_board):
         if self.selected == None:
@@ -109,7 +110,6 @@ class Debug:
                 my_board.select_tile(clicked_at_tile, my_board)
             debug.select_tile(my_board.tiles[y][x], my_board)
         return False
-        
 
 if __name__ == "__main__":
     my_board = BoardDebug("default")
@@ -118,8 +118,15 @@ if __name__ == "__main__":
     players = ["white", "black"]
     while(True):
         try:
-            debug.render_board(my_board)
+            print(debug.render_board(my_board))
             print("{}'s turn".format(players[player]))
+            los_con = my_board.check_loss(players[player])
+            if los_con == "loss":
+                print(players[player], "LOST!")
+                break
+            elif los_con == "stalemate":
+                print("STALEMATE!")
+                break
             x = int(input("x: "))
             y = int(input("y: "))
             if debug.interface(my_board, x, y, players[player]):
