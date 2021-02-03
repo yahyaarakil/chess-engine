@@ -39,6 +39,15 @@ class Board:
                 if tile.piece_slot != None:
                     self.place_piece(tile.pos, Piece(tile.piece_slot.piece_name, tile.piece_slot.owner, tile.piece_slot.sprite_name))
 
+    def check_loss(self, player):
+        for piece in self.players[player][0] + self.players[player][1]:
+            if len(piece.move) != 0 or len(piece.attack) != 0:
+                return "Not loss"
+        for piece in self.players[player][0]:
+            if piece.is_attacked:
+                return "loss"
+        return "stalemate"
+
     def prune_moves(self):
         for row in self.tiles:
             for tile in row:
