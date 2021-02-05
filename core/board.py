@@ -53,6 +53,15 @@ class Board:
             for tile in row:
                 if tile.piece_slot != None:
                     for move in tile.piece_slot.move + tile.piece_slot.attack:
+
+                        move_prune = tile.piece_slot.move_prunes.get(move, 0)
+                        if move_prune != 0:
+                            if conds[move_prune](tile.piece_slot, tile.pos, self):
+                                if move in tile.piece_slot.move:
+                                    tile.piece_slot.move.remove(move)
+                                else:
+                                    tile.piece_slot.attack.remove(move)
+
                         temp_board = Board(self.board_pattern, self.tile_class, False)
                         temp_board.copy_board(ref_board = self)
                         temp_board.move_unchecked(temp_board.tiles[tile.pos[1]][tile.pos[0]], temp_board.tiles[move.pos[1]][move.pos[0]])
@@ -91,18 +100,23 @@ class Board:
     def calc_move(self, piece, pos):
         piece.move = []
         piece.attack = []
+        piece.coupled_tiles = {}
+        piece.move_prunes = {}
         move_pattern = piece_dictionaries[piece.piece_name]["move"]
         attack_pattern =  piece_dictionaries[piece.piece_name]["attack"]
         for pattern in move_pattern:
-            if len(pattern) == 3:
-                if not conds[pattern[2]](piece):
+            if len(pattern) >= 3:
+                if not conds[pattern[2]](piece, pos, self):
                     continue
             if pattern[0] == "pattern":
                 pat = pattern[1][:]
                 if piece_dictionaries[piece.piece_name]["reverse_move"]\
                     and piece.owner == "black":
                     pat.reverse()
-                self.find_pattern(piece, pos, "move", pat)
+                if len(pattern) == 5:
+                    self.find_pattern(piece, pos, "move", pat, pattern[3], pattern[4])
+                else:
+                    self.find_pattern(piece, pos, "move", pat)
             elif pattern[0] == "dimension":
                 self.find_dimension(piece, pos, "move", pattern[1])
         for pattern in attack_pattern:
@@ -151,7 +165,7 @@ class Board:
             pos_y += 1
 
         
-    def find_pattern(self, piece, pos, pattern_name, pattern):
+    def find_pattern(self, piece, pos, pattern_name, pattern, coupled_fun = None, move_prune = None):
         possilbe_count = 0
         possible = []
         pos_y = pos[1] - len(pattern)//2
@@ -164,7 +178,11 @@ class Board:
                         possilbe_count += 1
                         if self.tiles[pos_y][pos_x].piece_slot == None and pattern_name == "move":
                             if pattern[row][column] == 1:
-                                piece.move.append(self.tiles[pos_y][pos_x])
+                                this_move = self.tiles[pos_y][pos_x]
+                                piece.move.append(this_move)
+                                if coupled_fun != None:
+                                    piece.coupled_tiles[this_move] = coupled_fun
+                                    piece.move_prunes[this_move] = move_prune
                             else:
                                 possible.append((self.tiles[pos_y][pos_x], "move"))
                         elif self.tiles[pos_y][pos_x].piece_slot != None and pattern_name == "attack":
@@ -191,6 +209,9 @@ class Board:
         if from_tile.piece_slot == None:
             return
         if to_tile in from_tile.piece_slot.move + from_tile.piece_slot.attack:
+            coupled_fun = from_tile.piece_slot.coupled_tiles.get(to_tile, 0)
+            if coupled_fun != 0:
+                conds[coupled_fun](from_tile.piece_slot, from_tile.pos, self)
             self.move_unchecked(from_tile, to_tile)
             self.refresh_moves()
             return True

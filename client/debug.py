@@ -1,4 +1,5 @@
 import sys
+import time
 sys.path.append("../core/")
 from board_patterns import *
 from board import *
@@ -39,20 +40,24 @@ class Debug:
             return token
 
     def render_tile_mode_end(self, tile):
+        string = ""
         if tile.selected:
-            print(")", end = "")
+            string += (")")
         elif tile.highlighted:
-            print("|", end = "")
+            string +=("|")
         else:
-            print(" ", end = "")
+            string +=(" ")
+        return string
 
     def render_tile_mode_start(self, tile):
+        string = ""
         if tile.selected:
-            print("(", end = "")
+            string +=("(")
         elif tile.highlighted:
-            print("|", end = "")
+            string +=("|")
         else:
-            print(" ", end = "")
+            string +=(" ")
+        return string
 
     def render_board(self, board):
         string = ""
@@ -62,14 +67,15 @@ class Debug:
             string+=("\n "+"*"*(5*board.width+1)+"\n"+str(row_no)+"*")
             row_no += 1
             for tile in row:
-                self.render_tile_mode_start(tile)
-                string+=(self.piece_to_token(tile.piece_slot))
-                self.render_tile_mode_end(tile)
+                string += (self.render_tile_mode_start(tile))
+                string += (self.piece_to_token(tile.piece_slot))
+                string += (self.render_tile_mode_end(tile))
                 string+=("*")
         string+=("\n "+"*"*(5*board.width+1)+"\n")
         for i in range(board.width):
             string+=("    {}".format(i))
         string+=("\n\n\n")
+        return string
 
     def deselect(self, my_board):
         if self.selected == None:
@@ -112,12 +118,12 @@ class Debug:
         return False
 
 if __name__ == "__main__":
-    my_board = BoardDebug("default")
+    my_board = BoardDebug("testing")
     debug = Debug()
     player = 0
     players = ["white", "black"]
     while(True):
-        try:
+        # try:
             print(debug.render_board(my_board))
             print("{}'s turn".format(players[player]))
             los_con = my_board.check_loss(players[player])
@@ -136,5 +142,5 @@ if __name__ == "__main__":
                 if player == 2:
                     player = 0
                 my_board.dehighlight()
-        except Exception as e:
-            print(e)
+        # except Exception as e:
+        #     print(e)

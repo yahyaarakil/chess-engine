@@ -11,13 +11,83 @@ class Piece:
         self.identifier = Piece.identifiers
         Piece.identifiers += 1
 
-def pawn_cond(piece):
+def pawn_cond(piece, pos, board):
     if piece.move_no == 0:
         return True
     return False
 
+# King side
+def move_king_rook(piece, pos, board):
+    board.move_unchecked(board.tiles[pos[1]][board.width-1], board.tiles[pos[1]][pos[0]+1])
+
+def king_side_cond(piece, pos, board):
+    if piece.move_no == 0:
+        if piece.is_attacked:
+            return False
+        if pos[0]+3 > board.width - 1:
+            return False
+        rook = board.tiles[pos[1]][board.width-1].piece_slot
+        if rook != None:
+            if rook.piece_name == "rook" and rook.move_no == 0 and rook.owner == piece.owner:
+                for tile_index in range(board.width-1-pos[0]-1):
+                    selection = pos[0] + 1 + tile_index
+                    if board.tiles[pos[1]][selection].piece_slot != None:
+                        return False
+                return True
+    return False
+
+def king_side_prune(piece, pos, board):
+    for tile_index in range(board.width-1-pos[0]-1):
+        selection = pos[0] + 1 + tile_index
+        for row in board.tiles:
+            for tile in row:
+                if tile.piece_slot != None:
+                    if tile.piece_slot.owner != piece.owner:
+                        if board.tiles[pos[1]][selection] in tile.piece_slot.move:
+                            return True
+    return False
+
+# Queen side
+def move_queen_rook(piece, pos, board):
+    board.move_unchecked(board.tiles[pos[1]][0], board.tiles[pos[1]][pos[0]-1])
+
+def queen_side_cond(piece, pos, board):
+    if piece.move_no == 0:
+        if piece.is_attacked:
+            return False
+        if pos[0]-4 < 0:
+            return False
+        rook = board.tiles[pos[1]][0].piece_slot
+        if rook != None:
+            if rook.piece_name == "rook" and rook.move_no == 0 and rook.owner == piece.owner:
+                for tile_index in range(pos[0]-1):
+                    selection = 1 + tile_index
+                    if board.tiles[pos[1]][selection].piece_slot != None:
+                        return False
+                return True
+    return False
+
+def queen_side_prune(piece, pos, board):
+    for tile_index in range(pos[0]-1):
+        selection = 1 + tile_index
+        for row in board.tiles:
+            for tile in row:
+                if tile.piece_slot != None:
+                    if tile.piece_slot.owner != piece.owner:
+                        if board.tiles[pos[1]][selection] in tile.piece_slot.move:
+                            return True
+    return False
+
 conds = {
     "pawn_cond": pawn_cond,
+
+    "king_side_cond": king_side_cond,
+    "move_king_rook": move_king_rook,
+    "king_side_prune": king_side_prune,
+
+    "queen_side_cond": queen_side_cond,
+    "move_queen_rook": move_queen_rook,
+    "queen_side_prune": queen_side_prune,
 }
         
 patterns = {
@@ -49,7 +119,21 @@ patterns = {
         [1, 1, 1],
         [1, 0, 1],
         [1, 1, 1]
-    ]
+    ],
+    "king_side": [
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0]
+    ],
+    "queen_side": [
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0]
+    ],
 }
 
 dimensions = {
@@ -113,7 +197,9 @@ piece_dictionaries = {
     },
     "king":{
         "value": 0,
-        "move": (("pattern", patterns["king"]), ),
+        "move": (("pattern", patterns["king"]),
+        ("pattern", patterns["king_side"], "king_side_cond", "move_king_rook", "king_side_prune"),
+        ("pattern", patterns["queen_side"], "queen_side_cond", "move_queen_rook", "queen_side_prune"),),
         "attack": (("pattern", patterns["king"]), ),
         "reverse_move": False,
         "sprite": "king.png",
