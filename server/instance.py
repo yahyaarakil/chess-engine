@@ -43,5 +43,5 @@ class Chess_instance(threading.Thread):
         self.player1.connection.send(self.board.render_board())
         self.player2.connection.send(self.board.render_board())
 
-        while True:
+        #while True:
             

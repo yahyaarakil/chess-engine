@@ -27,7 +27,7 @@ class Client:
         print(server_message)
         if self.color == "white":
             self.my_socket.send(input("x, y: "))
-            while True:
+            #while True:
                 
 
 if __name__ == "__main__":

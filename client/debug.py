@@ -118,7 +118,7 @@ class Debug:
         return False
 
 if __name__ == "__main__":
-    my_board = BoardDebug("testing")
+    my_board = BoardDebug("default")
     debug = Debug()
     player = 0
     players = ["white", "black"]
@@ -126,6 +126,7 @@ if __name__ == "__main__":
         # try:
             print(debug.render_board(my_board))
             print("{}'s turn".format(players[player]))
+            print("Turn:", my_board.turn_no)
             los_con = my_board.check_loss(players[player])
             if los_con == "loss":
                 print(players[player], "LOST!")

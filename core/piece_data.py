@@ -1,6 +1,7 @@
 class Piece:
     identifiers = 0
     def __init__(self, piece_name, owner, sprite_name):
+        self.last_moved = -1
         self.piece_name = piece_name
         self.owner = owner
         self.move = []
@@ -11,9 +12,18 @@ class Piece:
         self.identifier = Piece.identifiers
         Piece.identifiers += 1
 
+def pawn_init(piece, pos, board):
+    piece.double_move = False
+
 def pawn_cond(piece, pos, board):
     if piece.move_no == 0:
         return True
+    return False
+
+def double_move_fun(piece, pos, board):
+    piece.double_move = True
+
+def double_move_prune(piece, pos, board):
     return False
 
 # King side
@@ -78,8 +88,53 @@ def queen_side_prune(piece, pos, board):
                             return True
     return False
 
+# En passant
+
+def en_passant_kill_right(piece, pos, board):
+    board.kill((pos[0] + 1, pos[1]))
+
+def en_passant_cond_right(piece, pos, board):
+    x = pos[0] + 1
+    if x > board.width - 1:
+        return False
+    piece_right = board.tiles[pos[1]][x].piece_slot
+    if piece_right == None:
+        return False
+    if piece_right.owner == piece.owner:
+        return False
+    if piece_right.piece_name != "pawn":
+        return False
+    if not piece_right.double_move:
+        return False
+    if piece_right.last_moved == board.turn_no - 1:
+        return True
+    return False
+
+def en_passant_kill_left(piece, pos, board):
+    board.kill((pos[0] - 1, pos[1]))
+
+def en_passant_cond_left(piece, pos, board):
+    x = pos[0] - 1
+    if x < 0:
+        return False
+    piece_left = board.tiles[pos[1]][x].piece_slot
+    if piece_left == None:
+        return False
+    if piece_left.owner == piece.owner:
+        return False
+    if piece_left.piece_name != "pawn":
+        return False
+    if not piece_left.double_move:
+        return False
+    if piece_left.last_moved == board.turn_no - 1:
+        return True
+    return False
+
+
 conds = {
     "pawn_cond": pawn_cond,
+    "double_move_fun": double_move_fun,
+    "double_move_prune": double_move_prune,
 
     "king_side_cond": king_side_cond,
     "move_king_rook": move_king_rook,
@@ -88,6 +143,11 @@ conds = {
     "queen_side_cond": queen_side_cond,
     "move_queen_rook": move_queen_rook,
     "queen_side_prune": queen_side_prune,
+
+    "en_passant_kill_right": en_passant_kill_right,
+    "en_passant_cond_right": en_passant_cond_right,
+    "en_passant_kill_left": en_passant_kill_left,
+    "en_passant_cond_left": en_passant_cond_left,
 }
         
 patterns = {
@@ -103,8 +163,13 @@ patterns = {
         [0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0]
     ],
-    "pawn_attack": [
-        [1, 0, 1],
+    "pawn_attack1": [
+        [1, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0]
+    ],
+    "pawn_attack2": [
+        [0, 0, 1],
         [0, 0, 0],
         [0, 0, 0]
     ],
@@ -162,10 +227,15 @@ dimensions = {
 piece_dictionaries = {
     "pawn":{
         "value": 1,
-        "move": (("pattern", patterns["pawn_move"]), ("pattern", patterns["pawn_move1"], "pawn_cond"),),
-        "attack": (("pattern", patterns["pawn_attack"]), ),
+        "move": (("pattern", patterns["pawn_move"]),
+        ("pattern", patterns["pawn_move1"], "pawn_cond", "double_move_fun", "double_move_prune"),
+        ("pattern", patterns["pawn_attack2"], "en_passant_cond_right", "en_passant_kill_right", "double_move_prune"),
+        ("pattern", patterns["pawn_attack1"], "en_passant_cond_left", "en_passant_kill_left", "double_move_prune"),),
+        "attack": (("pattern", patterns["pawn_attack1"]),
+        ("pattern", patterns["pawn_attack2"]),),
         "reverse_move": True,
-        "sprite": "pawn.png"
+        "sprite": "pawn.png",
+        "init": pawn_init
     },
     "rook":{
         "value": 5,

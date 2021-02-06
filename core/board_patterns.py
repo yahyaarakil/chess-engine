@@ -68,7 +68,7 @@ board_dictionaries = {
             ((0, 7), "rook", "white"),
             ((7, 7), "rook", "white"),
 
-            ((5, 2), "rook", "black"),
+            ((7, 2), "rook", "black"),
 
         ]
     },

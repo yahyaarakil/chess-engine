@@ -10,6 +10,7 @@ class Tile:
 
 class Board:
     def __init__(self, board_pattern, tile_class = Tile, load = True):
+        self.turn_no = 0
         self.tiles = []
         self.tile_class = tile_class
         self.board_pattern = board_pattern
@@ -70,7 +71,7 @@ class Board:
                             if piece.is_attacked:
                                 if move in tile.piece_slot.move:
                                     tile.piece_slot.move.remove(move)
-                                else:
+                                elif move in tile.piece_slot.attack:
                                     tile.piece_slot.attack.remove(move)
 
     
@@ -96,6 +97,8 @@ class Board:
             self.players[piece.owner][0].append(piece)
         else:
             self.players[piece.owner][1].append(piece)
+        if "init" in piece_dictionaries[piece.piece_name]:
+            piece_dictionaries[piece.piece_name]["init"](piece, pos, self)
 
     def calc_move(self, piece, pos):
         piece.move = []
@@ -180,11 +183,12 @@ class Board:
                             if pattern[row][column] == 1:
                                 this_move = self.tiles[pos_y][pos_x]
                                 piece.move.append(this_move)
-                                if coupled_fun != None:
-                                    piece.coupled_tiles[this_move] = coupled_fun
-                                    piece.move_prunes[this_move] = move_prune
                             else:
+                                this_move = self.tiles[pos_y][pos_x]
                                 possible.append((self.tiles[pos_y][pos_x], "move"))
+                            if coupled_fun != None:
+                                piece.coupled_tiles[this_move] = coupled_fun
+                                piece.move_prunes[this_move] = move_prune
                         elif self.tiles[pos_y][pos_x].piece_slot != None and pattern_name == "attack":
                             if self.tiles[pos_y][pos_x].piece_slot.owner != piece.owner:
                                 if pattern[row][column] == 1:
@@ -200,10 +204,13 @@ class Board:
                 elif tile[1] == "attack":
                     piece.attack.append(tile[0])
 
-    def kill(self, piece):
+    def kill(self, pos):
+        piece = self.tiles[pos[1]][pos[0]].piece_slot
+        if piece == None:
+            return
         if piece in self.players[piece.owner][1]:
             self.players[piece.owner][1].remove(piece)
-        del piece
+        self.tiles[pos[1]][pos[0]].piece_slot = None
 
     def move(self, from_tile, to_tile):
         if from_tile.piece_slot == None:
@@ -219,10 +226,12 @@ class Board:
 
     def move_unchecked(self, from_tile, to_tile):
         if to_tile.piece_slot != None:
-            self.kill(to_tile.piece_slot)
+            self.kill(to_tile.pos)
         to_tile.piece_slot = from_tile.piece_slot
         from_tile.piece_slot = None
         to_tile.piece_slot.move_no += 1
+        to_tile.piece_slot.last_moved = self.turn_no
+        self.turn_no += 1
         return True
 
 
