@@ -1,10 +1,27 @@
 canvas{
     display: inline;
 }
-#canvasc {
-    width: 100%;
-    text-align:center;
-}
 html{
     background-color: dimgrey;
 }
+.container {
+    width: 80%;
+    height: 600px;
+    margin: auto;
+    padding: 10px;
+  }
+  
+  .one {
+    width: 60%;
+    height: 600px;
+    background: black;
+    float: left;
+    text-align: right;
+  }
+  
+  .two {
+    margin-left: 60%;
+    height: 600px;
+    background: white;
+    text-align: left;
+  }
