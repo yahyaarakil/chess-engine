@@ -118,7 +118,7 @@ class Debug:
         return False
 
 if __name__ == "__main__":
-    my_board = BoardDebug("default")
+    my_board = BoardDebug("testing")
     debug = Debug()
     player = 0
     players = ["white", "black"]

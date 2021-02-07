@@ -19,6 +19,7 @@ class Board:
             self.players[player] = [[], []]
         self. width = board_dictionaries[board_pattern]["dimensions"][0]
         self. height = board_dictionaries[board_pattern]["dimensions"][1]
+        self.moves = []
         color = board_dictionaries[self.board_pattern]["tile_zero"]
         for y in range(8):
             self.tiles.append([])
@@ -31,14 +32,14 @@ class Board:
 
     def load_pattern(self, board_pattern):
         for piece_data in board_dictionaries[board_pattern]["pieces"]:
-            self.place_piece(piece_data[0], Piece(piece_data[1], piece_data[2], piece_dictionaries[piece_data[1]]["sprite"]))
+            self.place_piece(piece_data[0], Piece(piece_data[1], piece_data[2]))
         self.refresh_moves()
 
     def copy_board(self, ref_board):
         for row in ref_board.tiles:
             for tile in row:
                 if tile.piece_slot != None:
-                    self.place_piece(tile.pos, Piece(tile.piece_slot.piece_name, tile.piece_slot.owner, tile.piece_slot.sprite_name))
+                    self.place_piece(tile.pos, Piece(tile.piece_slot.piece_name, tile.piece_slot.owner))
 
     def check_loss(self, player):
         for piece in self.players[player][0] + self.players[player][1]:
@@ -76,6 +77,7 @@ class Board:
 
     
     def refresh_moves(self, check = True):
+        changed = []
         for row in self.tiles:
             for tile in row:
                 if tile.piece_slot != None:
@@ -85,11 +87,16 @@ class Board:
             x = 0
             for tile in row:
                 if tile.piece_slot != None:
+                    pre = tile.piece_slot.move + tile.piece_slot.attack
                     self.calc_move(tile.piece_slot, (x, y))
+                    post = tile.piece_slot.move + tile.piece_slot.attack
+                    if pre != post:
+                        changed.append(tile)
                 x += 1
             y += 1
         if check:
             self.prune_moves()
+        return changed
     
     def place_piece(self, pos, piece):
         self.tiles[pos[1]][pos[0]].piece_slot = piece
@@ -212,19 +219,18 @@ class Board:
             self.players[piece.owner][1].remove(piece)
         self.tiles[pos[1]][pos[0]].piece_slot = None
 
-    def move(self, from_tile, to_tile):
+    def move(self, from_tile, to_tile, promotes_to = 0):
         if from_tile.piece_slot == None:
-            return
+            return []
         if to_tile in from_tile.piece_slot.move + from_tile.piece_slot.attack:
+            self.moves.append(from_tile, to_tile)
             coupled_fun = from_tile.piece_slot.coupled_tiles.get(to_tile, 0)
             if coupled_fun != 0:
                 conds[coupled_fun](from_tile.piece_slot, from_tile.pos, self)
-            self.move_unchecked(from_tile, to_tile)
-            self.refresh_moves()
-            return True
-        return False
+            self.move_unchecked(from_tile, to_tile, promotes_to)
+            return self.refresh_moves()
 
-    def move_unchecked(self, from_tile, to_tile):
+    def move_unchecked(self, from_tile, to_tile, promotes_to = 0):
         if to_tile.piece_slot != None:
             self.kill(to_tile.pos)
         to_tile.piece_slot = from_tile.piece_slot
@@ -232,6 +238,17 @@ class Board:
         to_tile.piece_slot.move_no += 1
         to_tile.piece_slot.last_moved = self.turn_no
         self.turn_no += 1
+        pi_dat = piece_dictionaries[to_tile.piece_slot.piece_name]
+        if "promotes" in pi_dat:
+            self.promote(to_tile, pi_dat["promotes"][promotes_to])
         return True
 
+    def promote(self, tile, to):
+        if tile.piece_slot != None:
+            if tile.piece_slot.piece_name == "pawn":
+                owner = tile.piece_slot.owner
+                if owner == "white" and tile.pos[1] == 0\
+                    or owner == "black" and tile.pos[1] == self.height - 1:
+                    self.kill(tile.pos)
+                    self.place_piece(tile.pos, Piece(to, owner))
 

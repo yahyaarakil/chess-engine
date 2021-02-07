@@ -1,12 +1,11 @@
 class Piece:
     identifiers = 0
-    def __init__(self, piece_name, owner, sprite_name):
+    def __init__(self, piece_name, owner):
         self.last_moved = -1
         self.piece_name = piece_name
         self.owner = owner
         self.move = []
         self.attack = []
-        self.sprite_name = sprite_name
         self.move_no = 0
         self.is_attacked = False
         self.identifier = Piece.identifiers
@@ -234,36 +233,32 @@ piece_dictionaries = {
         "attack": (("pattern", patterns["pawn_attack1"]),
         ("pattern", patterns["pawn_attack2"]),),
         "reverse_move": True,
-        "sprite": "pawn.png",
-        "init": pawn_init
+        "init": pawn_init,
+        "promotes": ("rook", "bishop", "knight", "queen")
     },
     "rook":{
         "value": 5,
         "move": (("dimension", dimensions["vertical"]), ("dimension", dimensions["horizontal"])),
         "attack": (("dimension", dimensions["vertical"]), ("dimension", dimensions["horizontal"])),
         "reverse_move": False,
-        "sprite": "rook.png"
     },
     "knight":{
         "value": 3,
         "move": (("pattern", patterns["knight"]), ),
         "attack": (("pattern", patterns["knight"]), ),
         "reverse_move": False,
-        "sprite": "knight.png"
     },
     "bishop":{
         "value": 3,
         "move": (("dimension", dimensions["diag1"]), ("dimension", dimensions["diag2"])),
         "attack": (("dimension", dimensions["diag1"]), ("dimension", dimensions["diag2"])),
         "reverse_move": False,
-        "sprite": "bishop.png"
     },
     "queen":{
         "value": 9,
         "move": (("dimension", dimensions["diag1"]), ("dimension", dimensions["diag2"]), ("dimension", dimensions["vertical"]), ("dimension", dimensions["horizontal"])),
         "attack": (("dimension", dimensions["diag1"]), ("dimension", dimensions["diag2"]), ("dimension", dimensions["vertical"]), ("dimension", dimensions["horizontal"])),
         "reverse_move": False,
-        "sprite": "queen.png"
     },
     "king":{
         "value": 0,
@@ -272,7 +267,6 @@ piece_dictionaries = {
         ("pattern", patterns["queen_side"], "queen_side_cond", "move_queen_rook", "queen_side_prune"),),
         "attack": (("pattern", patterns["king"]), ),
         "reverse_move": False,
-        "sprite": "king.png",
         "guarded": "king"
     }
 }
