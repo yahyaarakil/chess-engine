@@ -1,0 +1,10 @@
+canvas{
+    display: inline;
+}
+#canvasc {
+    width: 100%;
+    text-align:center;
+}
+html{
+    background-color: dimgrey;
+}
