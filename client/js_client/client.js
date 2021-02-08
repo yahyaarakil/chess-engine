@@ -1,5 +1,5 @@
 class Piece{
-    Piece(identifier, owner, spriteu, posx, posy){
+    constructor(identifier, owner, spriteu, posx, posy){
         this.identifier = identifier;
         this.owner = owner;
         this.spriteu = spriteu;
@@ -60,7 +60,7 @@ socket.onopen = function(e) {
 var ID = "";
 var status = "connecting";
 var game_stat = 0;
-var pieces = [];
+var piecesArr = [];
 
 function setStatus(newStatus){
     status = newStatus;
@@ -68,18 +68,18 @@ function setStatus(newStatus){
 }
 
 function setupGame(welcome){
-    pieces = [];
+    window.alert("setting up game");
+    piecesArr = [];
     welcome = welcome.split('>');
     initColor = parseInt(welcome[welcome.length-1]);
-    for(var i = 0; i < welcome.length-1; i++){
+    for(var i = 1; i < welcome.length-1; i++){
         if(i == 0){
             continue;
         }
         var piece = welcome[i].split(',');
         var pieceObj = new Piece(parseInt(piece[2]), piece[1], "/Users/yahyaarakil/Desktop/chessGine/client/js_client/sprites/"+piece[1]+"/"+piece[0]+".png", parseInt(piece[3]), parseInt(piece[4]));
-        pieces.push(pieceObj);
+        piecesArr.push(pieceObj);
     }
-    pieces.shift();
     resizeCanvas();
 }
 
@@ -99,7 +99,10 @@ socket.onmessage = function(event) {
         }
     }
     else if(message[0]=="welcome"){
-        pieces = setupGame(message[1], pieces);
+        setupGame(message[1]);
+    }
+    else if(message[0]=="game_update"){
+        updateGame(message);
     }
     return false;
 };
@@ -116,7 +119,6 @@ socket.onclose = function(event) {
 
 // Event handler to resize the canvas when the document view is changed
 window.addEventListener('resize', resizeCanvas, false);
-resizeCanvas();
 
 function resizeCanvas() {
     scale = window.innerHeight/450;
@@ -126,21 +128,21 @@ function resizeCanvas() {
     drawPieces(canvas, ctx, initColor);
 }
 
-function drawPieces(canvas, ctx, side = 0,){
+function drawPieces(canvas, ctx, side = 0){
+    var offset = 3 * scale;
     function rotate(pos){
         x = 7-pos[0];
         y = 7-pos[1];
         return [x, y];
     }
 
-    for(var i = 0; i < pieces.length; i ++){
-        piece = pieces[i];
+    for(var i = 0; i < piecesArr.length; i ++){
+        piece = piecesArr[i];
         pos = [piece.posx, piece.posy];
         if(side == 1){
             pos = rotate(pos);
         }
-        window.alert(piece.spriteu);
-        ctx.drawImage(piece.sprite, pos[0]*50*scale, pos[1]*50*scale);
+        ctx.drawImage(piece.sprite, pos[0]*50*scale + offset, pos[1]*50*scale + offset, 42*scale, 42*scale);
     }
 }
 
