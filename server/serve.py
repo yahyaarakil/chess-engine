@@ -11,6 +11,8 @@ from board import *
 from chess import *
 from piece_data import *
 
+colors = ["white", "black"]
+
 players = {}
 games = {}
 sockets = {}
@@ -38,13 +40,14 @@ async def new_game(message):
 async def join_game(message):
     games[message[0]] = games[message[2]]
     games[message[0]].append(message[0])
+    games[message[0]].append(0)
     await sockets[message[2]].send("status: in_game")
     players[message[0]] = 1
     return "status: in_game"
 
-def generate_welcome(message):
+def generate_welcome(status, message):
     board = games[message[0]][0]
-    welcome = "welcome "
+    welcome = "{} ".format(status)
     for row in board.tiles:
         for tile in row:
             if tile.piece_slot != None:
@@ -60,7 +63,23 @@ def generate_welcome(message):
                     welcome += str(move.pos[0]) + "," + str(move.pos[1]) + ";"
                 welcome += ")"
     welcome += ">" + str(players[message[0]])
+    welcome += ">" + str(games[message[0]][3])
     return welcome
+
+def play(message):
+    if games[message[0]][3] == players[message[0]]:
+        board = games[message[0]][0]
+        if board.tiles[int(message[3])][int(message[2])].piece_slot != None:
+            if colors[players[message[0]]] == board.tiles[int(message[3])][int(message[2])].piece_slot.owner:
+                moves = board.move(board.tiles[int(message[3])][int(message[2])],
+                board.tiles[int(message[5])][int(message[4])])
+                games[message[0]][3] += 1
+                if games[message[0]][3] > 1:
+                    games[message[0]][3] = 0
+                sockets[games[message[0]][1]].send(generate_welcome("game_update", [games[message[0]][1]]))
+                sockets[games[message[0]][1]].send(generate_welcome("game_update", [games[message[0]][2]]))
+                return "played"
+    return "not_played"
 
 async def interface(websocket, path):
     message = await websocket.recv()
@@ -74,7 +93,9 @@ async def interface(websocket, path):
         elif message[1] == "join_game":
             response = await join_game(message)
         elif message[1] == "welcome_me":
-            response = generate_welcome(message)
+            response = generate_welcome("welcome", message)
+        elif message[1] == "play":
+            response = play(message)
 
         await websocket.send(response)
         print(f"> {response}")

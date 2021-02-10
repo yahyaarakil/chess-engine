@@ -24,12 +24,16 @@ const ctx = canvas.getContext('2d');
 
 function getCursorPosition(canvas, event) {
     const rect = canvas.getBoundingClientRect();
-    const x = Math.floor((event.clientX - rect.left)/(50*scale));
-    const y = Math.floor((event.clientY - rect.top)/(50*scale));
+    var x = Math.floor((event.clientX - rect.left)/(50*scale));
+    var y = Math.floor((event.clientY - rect.top)/(50*scale));
+    return [x, y];
 }
 
 canvas.addEventListener('mousedown', function(e) {
-    getCursorPosition(canvas, e);
+    var pos = getCursorPosition(canvas, e);
+    if(myTurn){
+        interface(pos);
+    }
 })
 
 var rightBar = document.getElementById("rightBar");
@@ -61,18 +65,17 @@ var ID = "";
 var status = "connecting";
 var game_stat = 0;
 var piecesArr = [];
+var myTurn = false;
 
 function setStatus(newStatus){
     status = newStatus;
     idText.innerHTML = "ID: "+ID+"<br/>Status: "+newStatus;
 }
 
-function setupGame(welcome){
-    window.alert("setting up game");
+function inter_pieces(welcome){
     piecesArr = [];
     welcome = welcome.split('>');
-    initColor = parseInt(welcome[welcome.length-1]);
-    for(var i = 1; i < welcome.length-1; i++){
+    for(var i = 1; i < welcome.length-2; i++){
         if(i == 0){
             continue;
         }
@@ -80,6 +83,22 @@ function setupGame(welcome){
         var pieceObj = new Piece(parseInt(piece[2]), piece[1], "/Users/yahyaarakil/Desktop/chessGine/client/js_client/sprites/"+piece[1]+"/"+piece[0]+".png", parseInt(piece[3]), parseInt(piece[4]));
         piecesArr.push(pieceObj);
     }
+}
+
+function updateGame(message){
+    inter_pieces(message);
+    if(parseInt(message[message.length-1]) == initColor){
+        myTurn = true;
+    }else{
+        myTurn = false;
+    }
+}
+
+function setupGame(welcome){
+    var welcomecut = welcome.split('>');
+    window.alert("setting up game");
+    initColor = parseInt(welcomecut[welcomecut.length-2]);
+    updateGame(welcome);
     resizeCanvas();
 }
 
@@ -102,7 +121,7 @@ socket.onmessage = function(event) {
         setupGame(message[1]);
     }
     else if(message[0]=="game_update"){
-        updateGame(message);
+        updateGame(message[1]);
     }
     return false;
 };
@@ -129,7 +148,8 @@ function resizeCanvas() {
 }
 
 function drawPieces(canvas, ctx, side = 0){
-    var offset = 3 * scale;
+    var offset = 0.05 * scale;
+    var size = 32 * scale * 1.5;
     function rotate(pos){
         x = 7-pos[0];
         y = 7-pos[1];
@@ -142,7 +162,7 @@ function drawPieces(canvas, ctx, side = 0){
         if(side == 1){
             pos = rotate(pos);
         }
-        ctx.drawImage(piece.sprite, pos[0]*50*scale + offset, pos[1]*50*scale + offset, 42*scale, 42*scale);
+        ctx.drawImage(piece.sprite, pos[0]*50*scale + offset, pos[1]*50*scale + offset, size, size);
     }
 }
 
@@ -151,7 +171,7 @@ function renderBoard(canvas, ctx, firstColor = 1){
     canvas.setAttribute("height", (400*scale).toString());
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    var colors = ['darkgreen', 'lightgrey'];
+    var colors = ['rgb(208, 139, 78)', 'rgb(254, 206, 161)'];
     var color = firstColor;
 
     var offsetx = 0;
