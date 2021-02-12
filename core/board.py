@@ -223,14 +223,16 @@ class Board:
         if from_tile.piece_slot == None:
             return []
         if to_tile in from_tile.piece_slot.move + from_tile.piece_slot.attack:
-            self.moves.append(from_tile, to_tile)
-            coupled_fun = from_tile.piece_slot.coupled_tiles.get(to_tile, 0)
-            if coupled_fun != 0:
-                conds[coupled_fun](from_tile.piece_slot, from_tile.pos, self)
+            self.moves.append((from_tile, to_tile))
             self.move_unchecked(from_tile, to_tile, promotes_to)
             return self.refresh_moves()
 
     def move_unchecked(self, from_tile, to_tile, promotes_to = 0):
+        if to_tile in from_tile.piece_slot.move + from_tile.piece_slot.attack:
+            coupled_fun = from_tile.piece_slot.coupled_tiles.get(to_tile, 0)
+            if coupled_fun != 0:
+                print("executing coupled")
+                conds[coupled_fun](from_tile.piece_slot, from_tile.pos, self)
         if to_tile.piece_slot != None:
             self.kill(to_tile.pos)
         to_tile.piece_slot = from_tile.piece_slot
@@ -252,3 +254,30 @@ class Board:
                     self.kill(tile.pos)
                     self.place_piece(tile.pos, Piece(to, owner))
 
+    def other_player(self, player):
+        if player == "white":
+            return "black"
+        else:
+            return "white"
+
+    def evaluate_for(self, player):
+        white = 0
+        black = 0
+        for row in self.tiles:
+            for tile in row:
+                piece = tile.piece_slot
+                if piece != None:
+                    if piece.owner == "white":
+                        white += piece_dictionaries[piece.piece_name]["value"]
+                    elif piece.owner == "black":
+                        black += piece_dictionaries[piece.piece_name]["value"]
+        
+        if self.check_loss(player) == "loss":
+            return -float("inf")
+        elif self.check_loss(self.other_player(player)) == "loss":
+            return float("inf")
+        else:
+            if player == "white":
+                return white - black
+            elif player == "black":
+                return black - white

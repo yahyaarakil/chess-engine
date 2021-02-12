@@ -12,8 +12,12 @@ class Piece{
         this.height = 32;
     }
 }
+//game
+// var selected = null;
 
-
+// function interface(pos){
+//     if(selected == null && )
+// }
 
 // set up
 var scale = 1.5;

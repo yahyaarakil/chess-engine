@@ -54,22 +54,12 @@ board_dictionaries = {
         "dimensions": (8, 8),
         "tile_zero": -1,
         "pieces":[
-            ((0, 1), "pawn", "black"),
-            ((1, 1), "pawn", "black"),
-            ((2, 1), "pawn", "black"),
-            ((3, 1), "pawn", "black"),
-            ((4, 1), "pawn", "black"),
-            ((5, 1), "pawn", "black"),
-            ((6, 1), "pawn", "black"),
-            ((7, 1), "pawn", "black"),
-
-            ((3, 7), "queen", "white"),
-            ((4, 7), "king", "white"),
+            ((0, 3), "king", "white"),
+            ((3, 3), "pawn", "white"),
             ((0, 7), "rook", "white"),
-            ((7, 7), "rook", "white"),
-
-            ((7, 2), "rook", "black"),
-
+            
+            ((7, 3), "rook", "black"),
+            ((2, 1), "pawn", "black"),
         ]
     },
 }
