@@ -1,1 +1,1 @@
-# ChessGine
+# Dynamic ruleset chess engine
